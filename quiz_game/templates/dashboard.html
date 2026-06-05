@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrainBurst</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="dashboard-page">
+
+<nav class="navbar">
+  <div class="nav-logo">BrainBurst</div>
+  <div class="nav-user">
+    <span id="nav-avatar" class="nav-avatar-icon"></span>
+    <span id="nav-username">...</span>
+    <span class="token-badge"><span id="nav-tokens">0</span> coins</span>
+    <a href="/logout" class="btn btn-ghost btn-small">Logout</a>
+  </div>
+</nav>
+
+<div class="page-content">
+
+  <!-- HOME -->
+  <div id="section-home" class="section active">
+    <h2 class="section-title">What are we studying today?</h2>
+    <div class="subject-grid">
+      <div class="subject-card math" onclick="selectSubject('Math')">
+        <div class="subj-icon math-icon">
+          <svg viewBox="0 0 40 40"><text y="30" font-size="26" fill="#E07B39">+</text><text x="18" y="30" font-size="26" fill="#E07B39">-</text></svg>
+        </div>
+        <div class="subj-name">Maths</div>
+      </div>
+      <div class="subject-card science" onclick="selectSubject('Science')">
+        <div class="subj-icon sci-icon">
+          <svg viewBox="0 0 40 40" fill="none">
+            <rect x="16" y="4" width="8" height="14" rx="2" stroke="#26A69A" stroke-width="2.5"/>
+            <path d="M10 34 L14 18 H26 L30 34 Q20 40 10 34Z" fill="#B2DFDB" stroke="#26A69A" stroke-width="2"/>
+            <circle cx="20" cy="27" r="3" fill="#26A69A"/>
+          </svg>
+        </div>
+        <div class="subj-name">Science</div>
+      </div>
+      <div class="subject-card english" onclick="selectSubject('English')">
+        <div class="subj-icon eng-icon">
+          <svg viewBox="0 0 40 40"><text y="28" font-size="22" fill="#7C5CBF" font-weight="bold">Aa</text></svg>
+        </div>
+        <div class="subj-name">English</div>
+      </div>
+      <div class="subject-card chinese" onclick="selectSubject('Chinese')">
+        <div class="subj-icon chi-icon">
+          <svg viewBox="0 0 40 40"><text y="30" font-size="24" fill="#EC407A">文</text></svg>
+        </div>
+        <div class="subj-name">Chinese</div>
+      </div>
+      <div class="subject-card art" onclick="selectSubject('Art')">
+        <div class="subj-icon art-icon">
+          <svg viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="12" stroke="#FF8F00" stroke-width="2.5"/>
+            <circle cx="14" cy="16" r="3" fill="#E53935"/>
+            <circle cx="26" cy="16" r="3" fill="#1E88E5"/>
+            <circle cx="20" cy="26" r="3" fill="#43A047"/>
+            <circle cx="20" cy="20" r="3" fill="#FF8F00"/>
+          </svg>
+        </div>
+        <div class="subj-name">Art</div>
+      </div>
+    </div>
+
+    <div id="level-picker" class="hidden level-picker-card">
+      <h3>Which level are you in?</h3>
+      <div class="level-grid">
+        <button class="level-btn" onclick="pickLevel(1)">P1</button>
+        <button class="level-btn" onclick="pickLevel(2)">P2</button>
+        <button class="level-btn" onclick="pickLevel(3)">P3</button>
+        <button class="level-btn" onclick="pickLevel(4)">P4</button>
+        <button class="level-btn" onclick="pickLevel(5)">P5</button>
+        <button class="level-btn" onclick="pickLevel(6)">P6</button>
+      </div>
+      <button class="btn btn-ghost" onclick="cancelSubject()">Back</button>
+    </div>
+
+    <div id="section-picker" class="hidden section-picker-card">
+      <h3>Which type of questions?</h3>
+      <div class="section-picker" id="section-cards-container">
+        <!-- dynamically filled by JS -->
+      </div>
+      <button class="btn btn-ghost" onclick="backToLevels()">Back</button>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="section-quiz" class="section">
+    <div class="quiz-header">
+      <div class="quiz-meta">
+        <span id="quiz-label" class="quiz-label-text">Maths P1</span>
+        <span class="q-counter">Question <span id="q-num">1</span> of <span id="q-total">10</span></span>
+      </div>
+      <div class="quiz-streak"><span id="streak-count">0</span> in a row</div>
+    </div>
+    <div class="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+    <div class="question-card">
+      <p id="question-text" class="question-text"></p>
+      <div class="options-grid" id="options-container"></div>
+      <div id="open-answer-container" class="hidden">
+        <input type="text" id="answer-input" class="answer-input" placeholder="Type your answer here..." onkeydown="if(event.key==='Enter')submitTextAnswer()">
+        <button id="submit-answer-btn" class="btn btn-primary" onclick="submitTextAnswer()">Check</button>
+      </div>
+    </div>
+    <div id="feedback-box" class="feedback-box hidden"></div>
+    <button id="next-btn" class="btn btn-primary hidden" onclick="nextQuestion()">Next</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="section-results" class="section">
+    <div class="results-card">
+      <div class="result-mascot">
+        <img src="/static/img/dog.png" alt="mascot" style="width:120px;height:120px;object-fit:contain;">
+      </div>
+      <h2 id="result-title">You did it!</h2>
+      <p id="result-score" class="result-score"></p>
+      <p id="result-tokens" class="result-tokens"></p>
+      <div id="new-badges" class="badge-row"></div>
+      <div class="result-btns">
+        <button class="btn btn-primary" onclick="showSection('home')">Play again</button>
+        <button class="btn btn-secondary" onclick="showSection('leaderboard'); loadLeaderboard()">Rankings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div id="section-leaderboard" class="section">
+    <h2 class="section-title">Who's on top?</h2>
+    <div id="leaderboard-list" class="leaderboard-list"></div>
+    <button class="btn btn-ghost" onclick="showSection('home')">Back</button>
+  </div>
+
+  <!-- SHOP -->
+  <div id="section-shop" class="section">
+    <h2 class="section-title">Spend your coins</h2>
+    <div class="shop-tabs">
+      <button class="tab-btn active" onclick="shopTab('games', this)">Mini Games</button>
+      <button class="tab-btn" onclick="shopTab('avatars', this)">Avatars</button>
+    </div>
+
+    <div id="shop-games" class="shop-grid">
+      {% for g in games %}
+      <div class="shop-card" id="game-card-{{g.slug}}">
+        <div class="shop-icon-label">{{g.icon}}</div>
+        <div class="shop-name">{{g.name}}</div>
+        <div class="shop-desc">{{g.description}}</div>
+        <div class="shop-cost">{{g.cost}} coins</div>
+        <button class="btn btn-primary" onclick="unlockGame('{{g.slug}}', {{g.cost}})">Unlock</button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="shop-avatars" class="shop-grid hidden">
+      {% for a in avatars %}
+      <div class="shop-card" id="avatar-card-{{a.id}}">
+        <div class="avatar-preview-big">{{a.icon}}</div>
+        <div class="shop-name">{{a.name}}</div>
+        {% if a.cost == 0 %}
+        <div class="shop-cost free">Free</div>
+        {% else %}
+        <div class="shop-cost">{{a.cost}} coins</div>
+        {% endif %}
+        <button class="btn btn-primary" onclick="unlockAvatar('{{a.id}}', {{a.cost}})">
+          {% if a.cost == 0 %}Use{% else %}Get it{% endif %}
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button class="btn btn-ghost" onclick="showSection('home')">Back</button>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="section-profile" class="section">
+    <h2 class="section-title">My Profile</h2>
+    <div class="profile-card">
+      <div id="profile-avatar" class="profile-avatar"></div>
+      <div id="profile-username" class="profile-username"></div>
+      <div class="token-big"><span id="profile-tokens">0</span> coins</div>
+    </div>
+    <h3 class="badges-title">Badges earned</h3>
+    <div id="profile-badges" class="badge-grid"></div>
+    <button class="btn btn-ghost" onclick="showSection('home')">Back</button>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button onclick="showSection('home')" class="nav-item active" id="nav-home">
+    <svg viewBox="0 0 24 24" width="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/>
+    </svg>
+    <small>Home</small>
+  </button>
+  <button onclick="showSection('leaderboard'); loadLeaderboard()" class="nav-item" id="nav-leaderboard">
+    <svg viewBox="0 0 24 24" width="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/>
+    </svg>
+    <small>Ranking</small>
+  </button>
+  <button onclick="showSection('shop'); refreshShop()" class="nav-item" id="nav-shop">
+    <svg viewBox="0 0 24 24" width="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    </svg>
+    <small>Shop</small>
+  </button>
+  <button onclick="showSection('profile'); loadProfile()" class="nav-item" id="nav-profile">
+    <svg viewBox="0 0 24 24" width="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    </svg>
+    <small>Me</small>
+  </button>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

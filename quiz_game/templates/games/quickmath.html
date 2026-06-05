@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Math ➗</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="game-page">
+<div class="game-header">
+  <a href="/dashboard" class="back-btn">←</a>
+  <h1>➗ Quick Math</h1>
+</div>
+<div class="game-score">Score: <span id="score">0</span> &nbsp;|&nbsp; ⏱ <span id="timer">30</span>s &nbsp;|&nbsp; 🔥 <span id="streak">0</span></div>
+
+<div id="play-area">
+  <div class="scramble-word" id="problem" style="letter-spacing:2px">…</div>
+  <input class="scramble-input" id="answer-input" inputmode="numeric" type="text" placeholder="?" autocomplete="off" style="letter-spacing:2px">
+  <div style="display:flex;gap:10px;margin-top:14px">
+    <button class="btn btn-primary" style="flex:1" onclick="checkAnswer()">Check ✓</button>
+    <button class="btn btn-ghost" onclick="newProblem()">Skip ⏭</button>
+  </div>
+  <div id="feedback" style="text-align:center;margin-top:12px;font-weight:800;font-size:18px;min-height:26px"></div>
+</div>
+
+<div id="end-screen" class="hidden" style="text-align:center;margin-top:20px">
+  <div style="font-size:48px">🎉</div>
+  <div style="font-size:22px;font-weight:800;margin:10px 0">Time's up!</div>
+  <div id="final-score" style="font-size:18px;color:var(--warning);font-weight:700"></div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="startGame()">Play Again</button>
+  <a href="/dashboard" class="btn btn-ghost">← Back</a>
+</div>
+
+<script>
+let score = 0, streak = 0, timeLeft = 30, timerInterval, current = null, gameActive = false;
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function makeProblem() {
+  // Difficulty creeps up with score
+  const level = Math.min(4, Math.floor(score / 5));
+  const ops = level === 0 ? ['+', '-'] : ['+', '-', '×', '÷'];
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  let a, b, answer, text;
+  if (op === '+') {
+    a = randInt(1, 10 + level * 8); b = randInt(1, 10 + level * 8);
+    answer = a + b; text = `${a} + ${b}`;
+  } else if (op === '-') {
+    a = randInt(1, 10 + level * 8); b = randInt(1, a);
+    answer = a - b; text = `${a} − ${b}`;
+  } else if (op === '×') {
+    a = randInt(2, 6 + level * 2); b = randInt(2, 6 + level * 2);
+    answer = a * b; text = `${a} × ${b}`;
+  } else { // ÷ — build from a clean multiplication so it's whole
+    b = randInt(2, 6 + level); answer = randInt(2, 6 + level);
+    a = b * answer; text = `${a} ÷ ${b}`;
+  }
+  return { text, answer };
+}
+
+function newProblem() {
+  if (!gameActive) return;
+  current = makeProblem();
+  document.getElementById('problem').textContent = current.text + ' = ?';
+  const inp = document.getElementById('answer-input');
+  inp.value = '';
+  inp.focus();
+}
+
+function checkAnswer() {
+  if (!gameActive || !current) return;
+  const raw = document.getElementById('answer-input').value.trim();
+  if (raw === '') return;
+  const fb = document.getElementById('feedback');
+  if (parseInt(raw, 10) === current.answer) {
+    score++; streak++;
+    document.getElementById('score').textContent = score;
+    document.getElementById('streak').textContent = streak;
+    fb.textContent = streak >= 3 ? `✅ ${streak} in a row!` : '✅ Correct!';
+    fb.style.color = 'var(--success)';
+    newProblem();
+  } else {
+    streak = 0;
+    document.getElementById('streak').textContent = 0;
+    fb.textContent = '❌ Try again!';
+    fb.style.color = 'var(--danger)';
+    document.getElementById('answer-input').select();
+  }
+}
+
+function startGame() {
+  score = 0; streak = 0; timeLeft = 30; gameActive = true;
+  document.getElementById('score').textContent = 0;
+  document.getElementById('streak').textContent = 0;
+  document.getElementById('timer').textContent = 30;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('play-area').classList.remove('hidden');
+  document.getElementById('answer-input').disabled = false;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+  newProblem();
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  document.getElementById('answer-input').disabled = true;
+  document.getElementById('play-area').classList.add('hidden');
+  document.getElementById('end-screen').classList.remove('hidden');
+  document.getElementById('final-score').textContent = `You solved ${score} problems!`;
+}
+
+document.getElementById('answer-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAnswer();
+});
+
+startGame();
+</script>
+</body>
+</html>

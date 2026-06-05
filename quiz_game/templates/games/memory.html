@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Flip 🃏</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="game-page">
+<div class="game-header">
+  <a href="/dashboard" class="back-btn">←</a>
+  <h1>🃏 Memory Flip</h1>
+</div>
+<div class="game-score">Pairs found: <span id="pairs">0</span> / 8 &nbsp;|&nbsp; Moves: <span id="moves">0</span></div>
+<div class="memory-grid" id="grid"></div>
+<div style="text-align:center;margin-top:16px">
+  <button class="btn btn-primary" onclick="initGame()">🔄 New Game</button>
+  <a href="/dashboard" class="btn btn-ghost">← Back</a>
+</div>
+<div id="win-msg" class="hidden" style="text-align:center;margin-top:20px;font-size:20px;font-weight:800;color:var(--success)"></div>
+
+<script>
+const EMOJIS = ['🐶','🐱','🐭','🐹','🐰','🦊','🐸','🐯'];
+let cards = [], flipped = [], matched = 0, moves = 0, locked = false;
+
+function initGame() {
+  const pairs = [...EMOJIS, ...EMOJIS].sort(() => Math.random() - 0.5);
+  cards = pairs.map((e, i) => ({ id: i, emoji: e, isFlipped: false, isMatched: false }));
+  flipped = []; matched = 0; moves = 0; locked = false;
+  document.getElementById('pairs').textContent = 0;
+  document.getElementById('moves').textContent = 0;
+  document.getElementById('win-msg').classList.add('hidden');
+  render();
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  cards.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'mem-card' + (c.isFlipped ? ' flipped' : '') + (c.isMatched ? ' matched' : '');
+    div.innerHTML = `<span class="card-back">❓</span><span class="card-front">${c.emoji}</span>`;
+    if (!c.isMatched) div.onclick = () => flipCard(i);
+    grid.appendChild(div);
+  });
+}
+
+function flipCard(i) {
+  if (locked || cards[i].isFlipped || cards[i].isMatched) return;
+  cards[i].isFlipped = true;
+  flipped.push(i);
+  render();
+  if (flipped.length === 2) {
+    moves++;
+    document.getElementById('moves').textContent = moves;
+    locked = true;
+    setTimeout(check, 800);
+  }
+}
+
+function check() {
+  const [a, b] = flipped;
+  if (cards[a].emoji === cards[b].emoji) {
+    cards[a].isMatched = cards[b].isMatched = true;
+    matched++;
+    document.getElementById('pairs').textContent = matched;
+    if (matched === EMOJIS.length) {
+      document.getElementById('win-msg').textContent = `🎉 You won in ${moves} moves!`;
+      document.getElementById('win-msg').classList.remove('hidden');
+    }
+  } else {
+    cards[a].isFlipped = cards[b].isFlipped = false;
+  }
+  flipped = []; locked = false;
+  render();
+}
+
+initGame();
+</script>
+</body>
+</html>

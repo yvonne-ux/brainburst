@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Scramble 🔤</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="game-page">
+<div class="game-header">
+  <a href="/dashboard" class="back-btn">←</a>
+  <h1>🔤 Word Scramble</h1>
+</div>
+<div class="game-score">Score: <span id="score">0</span> &nbsp;|&nbsp; ⏱ <span id="timer">30</span>s</div>
+<div class="scramble-word" id="scrambled"></div>
+<div class="scramble-hint" id="hint"></div>
+<input class="scramble-input" id="answer-input" type="text" placeholder="TYPE YOUR ANSWER" autocomplete="off" autocorrect="off" autocapitalize="characters">
+<div style="display:flex;gap:10px;margin-top:14px">
+  <button class="btn btn-primary" style="flex:1" onclick="checkAnswer()">Check ✓</button>
+  <button class="btn btn-ghost" onclick="nextWord()">Skip ⏭</button>
+</div>
+<div id="feedback" style="text-align:center;margin-top:12px;font-weight:700;font-size:16px;min-height:24px"></div>
+<div id="end-screen" class="hidden" style="text-align:center;margin-top:20px">
+  <div style="font-size:48px">🎉</div>
+  <div style="font-size:22px;font-weight:800;margin:10px 0">Time's up!</div>
+  <div id="final-score" style="font-size:18px;color:var(--warning);font-weight:700"></div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="startGame()">Play Again</button>
+  <a href="/dashboard" class="btn btn-ghost">← Back</a>
+</div>
+
+<script>
+const WORDS = [
+  {word:'APPLE',hint:'A red or green fruit 🍎'},
+  {word:'SCHOOL',hint:'Where you learn 🏫'},
+  {word:'FRIEND',hint:'Someone you like spending time with 👫'},
+  {word:'SCIENCE',hint:'Study of the natural world 🔬'},
+  {word:'TRIANGLE',hint:'A shape with 3 sides 🔺'},
+  {word:'ELEPHANT',hint:'Largest land animal 🐘'},
+  {word:'RAINBOW',hint:'Appears after rain 🌈'},
+  {word:'LIBRARY',hint:'Full of books 📚'},
+  {word:'BUTTERFLY',hint:'Insect with colorful wings 🦋'},
+  {word:'MOUNTAIN',hint:'Very tall landform ⛰️'},
+  {word:'DOLPHIN',hint:'Smart sea mammal 🐬'},
+  {word:'PENCIL',hint:'Used for writing ✏️'},
+  {word:'PLANET',hint:'Orbits a star 🪐'},
+  {word:'GARDEN',hint:'Where flowers grow 🌻'},
+  {word:'DRAGON',hint:'Mythical fire-breathing creature 🐉'},
+  {word:'BRIDGE',hint:'Crosses over water 🌉'},
+  {word:'JUNGLE',hint:'Dense tropical forest 🌿'},
+  {word:'CASTLE',hint:'Where kings and queens live 🏰'},
+  {word:'OCEAN',hint:'Vast body of salt water 🌊'},
+  {word:'COMPASS',hint:'Points North 🧭'},
+];
+
+let score = 0, timerInterval, timeLeft = 30, current = null, usedWords = [];
+
+function scramble(word) {
+  let arr = word.split('');
+  do { arr.sort(() => Math.random() - 0.5); } while (arr.join('') === word);
+  return arr.join('');
+}
+
+function nextWord() {
+  const remaining = WORDS.filter(w => !usedWords.includes(w.word));
+  if (remaining.length === 0) { usedWords = []; }
+  const pool = WORDS.filter(w => !usedWords.includes(w.word));
+  current = pool[Math.floor(Math.random() * pool.length)];
+  usedWords.push(current.word);
+  document.getElementById('scrambled').textContent = scramble(current.word);
+  document.getElementById('hint').textContent = '💡 ' + current.hint;
+  document.getElementById('answer-input').value = '';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('answer-input').focus();
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answer-input').value.trim().toUpperCase();
+  const fb = document.getElementById('feedback');
+  if (input === current.word) {
+    score++;
+    document.getElementById('score').textContent = score;
+    fb.textContent = '✅ Correct!';
+    fb.style.color = 'var(--success)';
+    setTimeout(nextWord, 700);
+  } else {
+    fb.textContent = '❌ Try again!';
+    fb.style.color = 'var(--danger)';
+  }
+}
+
+function startGame() {
+  score = 0; timeLeft = 30; usedWords = [];
+  document.getElementById('score').textContent = 0;
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('answer-input').disabled = false;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById('answer-input').disabled = true;
+      document.getElementById('end-screen').classList.remove('hidden');
+      document.getElementById('final-score').textContent = `You scored ${score} points!`;
+    }
+  }, 1000);
+  nextWord();
+}
+
+document.getElementById('answer-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAnswer();
+});
+
+startGame();
+</script>
+</body>
+</html>

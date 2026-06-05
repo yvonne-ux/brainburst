@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Beats 🎵</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+  .simon-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:340px; margin:10px auto 4px; }
+  .pad {
+    aspect-ratio:1/1; border-radius:22px; cursor:pointer; border:none;
+    opacity:0.55; transition:opacity 0.12s, transform 0.12s;
+    box-shadow:0 6px 16px rgba(0,0,0,0.12); display:flex; align-items:center; justify-content:center;
+    font-size:40px; user-select:none;
+  }
+  .pad:active { transform:scale(0.96); }
+  .pad.lit { opacity:1; transform:scale(1.04); box-shadow:0 0 26px 6px rgba(255,255,255,0.8); }
+  .pad.green  { background:#2ECC71; }
+  .pad.red    { background:#E74C3C; }
+  .pad.blue   { background:#3498DB; }
+  .pad.yellow { background:#F1C40F; }
+  .simon-status { text-align:center; font-weight:800; font-size:16px; color:var(--primary); min-height:24px; margin:6px 0; }
+</style>
+</head>
+<body class="game-page">
+<div class="game-header">
+  <a href="/dashboard" class="back-btn">←</a>
+  <h1>🎵 Memory Beats</h1>
+</div>
+<div class="game-score">Round: <span id="round">1</span> &nbsp;|&nbsp; Best: <span id="best">0</span></div>
+
+<div id="play-area">
+  <div class="simon-status" id="status">Watch carefully…</div>
+  <div class="simon-grid">
+    <button class="pad green"  data-i="0">🟢</button>
+    <button class="pad red"    data-i="1">🔴</button>
+    <button class="pad blue"   data-i="2">🔵</button>
+    <button class="pad yellow" data-i="3">🟡</button>
+  </div>
+  <button class="btn btn-ghost" id="start-btn" style="display:block;margin:14px auto 0" onclick="startGame()">Start ▶</button>
+</div>
+
+<div id="end-screen" class="hidden" style="text-align:center;margin-top:20px">
+  <div style="font-size:48px">🎶</div>
+  <div style="font-size:22px;font-weight:800;margin:10px 0">Out of tune!</div>
+  <div id="final-score" style="font-size:18px;color:var(--warning);font-weight:700"></div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="startGame()">Play Again</button>
+  <a href="/dashboard" class="btn btn-ghost">← Back</a>
+</div>
+
+<script>
+const COLORS = ['green', 'red', 'blue', 'yellow'];
+const pads = Array.from(document.querySelectorAll('.pad'));
+let sequence = [], playerStep = 0, round = 0, best = 0, acceptInput = false;
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function lightPad(i) {
+  return new Promise(async resolve => {
+    pads[i].classList.add('lit');
+    await wait(420);
+    pads[i].classList.remove('lit');
+    await wait(180);
+    resolve();
+  });
+}
+
+async function playSequence() {
+  acceptInput = false;
+  document.getElementById('status').textContent = 'Watch carefully…';
+  await wait(600);
+  for (const i of sequence) { await lightPad(i); }
+  acceptInput = true;
+  playerStep = 0;
+  document.getElementById('status').textContent = 'Your turn! 🎧';
+}
+
+function nextRound() {
+  round++;
+  document.getElementById('round').textContent = round;
+  sequence.push(Math.floor(Math.random() * 4));
+  playSequence();
+}
+
+async function handlePad(i) {
+  if (!acceptInput) return;
+  // quick flash feedback
+  pads[i].classList.add('lit');
+  setTimeout(() => pads[i].classList.remove('lit'), 160);
+
+  if (i === sequence[playerStep]) {
+    playerStep++;
+    if (playerStep === sequence.length) {
+      acceptInput = false;
+      if (round > best) { best = round; document.getElementById('best').textContent = best; }
+      document.getElementById('status').textContent = '✅ Nice!';
+      await wait(650);
+      nextRound();
+    }
+  } else {
+    gameOver();
+  }
+}
+
+function gameOver() {
+  acceptInput = false;
+  document.getElementById('play-area').classList.add('hidden');
+  document.getElementById('end-screen').classList.remove('hidden');
+  const reached = Math.max(0, round - 1);
+  document.getElementById('final-score').textContent = `You repeated ${reached} beat${reached === 1 ? '' : 's'}!`;
+}
+
+function startGame() {
+  sequence = []; playerStep = 0; round = 0;
+  document.getElementById('round').textContent = 1;
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('play-area').classList.remove('hidden');
+  document.getElementById('start-btn').style.display = 'none';
+  nextRound();
+}
+
+pads.forEach(p => p.addEventListener('click', () => handlePad(parseInt(p.dataset.i, 10))));
+document.getElementById('best').textContent = best;
+</script>
+</body>
+</html>

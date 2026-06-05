@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odd One Out 🔍</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+  .odd-grid { display:grid; gap:8px; max-width:360px; margin:6px auto 0; justify-content:center; }
+  .odd-cell {
+    background:white; border-radius:14px; border:2px solid #EDE8FA;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05); transition:transform 0.08s;
+    aspect-ratio:1/1; user-select:none;
+  }
+  .odd-cell:active { transform:scale(0.92); }
+  .odd-cell.wrong { animation:shake 0.3s; border-color:var(--danger); }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .odd-bar { height:12px; background:#EDE8FA; border-radius:8px; overflow:hidden; max-width:360px; margin:14px auto 0; }
+  .odd-bar > div { height:100%; background:var(--primary); width:100%; transition:width 0.1s linear; }
+</style>
+</head>
+<body class="game-page">
+<div class="game-header">
+  <a href="/dashboard" class="back-btn">←</a>
+  <h1>🔍 Odd One Out</h1>
+</div>
+<div class="game-score">Score: <span id="score">0</span> &nbsp;|&nbsp; ⏱ <span id="timer">40</span>s &nbsp;|&nbsp; Lvl <span id="level">1</span></div>
+<div style="text-align:center;color:var(--muted);font-weight:700;font-size:13px;margin-bottom:6px">Tap the emoji that's different!</div>
+
+<div id="play-area">
+  <div class="odd-grid" id="grid"></div>
+  <div class="odd-bar"><div id="round-bar"></div></div>
+  <div id="feedback" style="text-align:center;margin-top:10px;font-weight:800;font-size:16px;min-height:22px"></div>
+</div>
+
+<div id="end-screen" class="hidden" style="text-align:center;margin-top:20px">
+  <div style="font-size:48px">🎉</div>
+  <div style="font-size:22px;font-weight:800;margin:10px 0">Time's up!</div>
+  <div id="final-score" style="font-size:18px;color:var(--warning);font-weight:700"></div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="startGame()">Play Again</button>
+  <a href="/dashboard" class="btn btn-ghost">← Back</a>
+</div>
+
+<script>
+// Pairs of look-alike emoji: [common, oddOne]
+const PAIRS = [
+  ['🐶','🐺'], ['🐱','🐯'], ['🍊','🍋'], ['😀','😄'], ['⭐','🌟'],
+  ['🌸','🌺'], ['🐰','🐹'], ['🦊','🐶'], ['🍎','🍏'], ['🐸','🐲'],
+  ['🌚','🌝'], ['🦉','🦅'], ['🐢','🐊'], ['🍆','🍇'], ['🔵','🟣'],
+  ['😺','😸'], ['🌻','🌼'], ['🐝','🪰'], ['🍓','🍒'], ['🥶','😨'],
+];
+
+let score = 0, level = 1, timeLeft = 40, timerInterval, roundTimer, gameActive = false, oddIndex = -1;
+const grid = document.getElementById('grid');
+const bar = document.getElementById('round-bar');
+
+function gridSize() {
+  // grows 2x2 → 3x3 → 4x4 → 5x5 as you level up
+  return Math.min(5, 2 + Math.floor((level - 1) / 3));
+}
+
+function newRound() {
+  if (!gameActive) return;
+  clearTimeout(roundTimer);
+  const n = gridSize();
+  const total = n * n;
+  grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  const cellSize = Math.floor(320 / n);
+  const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
+  // randomly decide which of the pair is "common" vs "odd"
+  const flip = Math.random() < 0.5;
+  const common = flip ? pair[0] : pair[1];
+  const odd = flip ? pair[1] : pair[0];
+  oddIndex = Math.floor(Math.random() * total);
+
+  grid.innerHTML = '';
+  const fontSize = Math.max(20, Math.floor(cellSize * 0.55));
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'odd-cell';
+    cell.style.fontSize = fontSize + 'px';
+    cell.textContent = i === oddIndex ? odd : common;
+    cell.addEventListener('click', () => pick(i, cell));
+    grid.appendChild(cell);
+  }
+
+  // per-round timer bar (gets tighter as you level up)
+  const roundMs = Math.max(2500, 6000 - level * 250);
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  // force reflow so the next transition animates
+  void bar.offsetWidth;
+  bar.style.transition = `width ${roundMs}ms linear`;
+  bar.style.width = '0%';
+  roundTimer = setTimeout(() => missRound(), roundMs);
+}
+
+function pick(i, cell) {
+  if (!gameActive) return;
+  const fb = document.getElementById('feedback');
+  if (i === oddIndex) {
+    score++; level++;
+    document.getElementById('score').textContent = score;
+    document.getElementById('level').textContent = level;
+    fb.textContent = '✅ Sharp eyes!';
+    fb.style.color = 'var(--success)';
+    newRound();
+  } else {
+    cell.classList.add('wrong');
+    fb.textContent = '❌ Not that one!';
+    fb.style.color = 'var(--danger)';
+    setTimeout(() => cell.classList.remove('wrong'), 300);
+  }
+}
+
+function missRound() {
+  if (!gameActive) return;
+  const fb = document.getElementById('feedback');
+  fb.textContent = '⏳ Too slow! Next…';
+  fb.style.color = 'var(--warning)';
+  // reveal nothing, just move on; level eases back slightly
+  level = Math.max(1, level - 1);
+  document.getElementById('level').textContent = level;
+  newRound();
+}
+
+function startGame() {
+  score = 0; level = 1; timeLeft = 40; gameActive = true;
+  document.getElementById('score').textContent = 0;
+  document.getElementById('level').textContent = 1;
+  document.getElementById('timer').textContent = 40;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('play-area').classList.remove('hidden');
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+  newRound();
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  clearTimeout(roundTimer);
+  document.getElementById('play-area').classList.add('hidden');
+  document.getElementById('end-screen').classList.remove('hidden');
+  document.getElementById('final-score').textContent = `You found ${score} odd ones!`;
+}
+
+startGame();
+</script>
+</body>
+</html>

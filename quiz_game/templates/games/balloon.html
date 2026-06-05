@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balloon Pop 🎈</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="game-page">
+<div class="game-header">
+  <a href="/dashboard" class="back-btn">←</a>
+  <h1>🎈 Balloon Pop</h1>
+</div>
+<div class="game-score">Score: <span id="score">0</span> &nbsp;|&nbsp; ⏱ <span id="timer">30</span>s &nbsp;|&nbsp; ❤️ <span id="lives">3</span></div>
+<div id="question-area" style="background:white;border-radius:16px;padding:16px 20px;margin-bottom:12px;font-size:17px;font-weight:700;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.08)">
+  Pop the balloon with the correct answer! 🎈
+</div>
+<div class="balloon-area" id="balloon-area"></div>
+<div id="end-screen" class="hidden" style="text-align:center;margin-top:16px">
+  <div style="font-size:48px">🎉</div>
+  <div style="font-size:22px;font-weight:800;margin:10px 0" id="end-title">Game Over!</div>
+  <div id="final-score" style="font-size:18px;color:var(--warning);font-weight:700"></div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="startGame()">Play Again</button>
+  <a href="/dashboard" class="btn btn-ghost">← Back</a>
+</div>
+
+<script>
+const QUESTIONS = [
+  {q:'3 + 4 = ?', correct:'7', wrongs:['6','8','5']},
+  {q:'5 × 6 = ?', correct:'30', wrongs:['25','35','28']},
+  {q:'20 ÷ 4 = ?', correct:'5', wrongs:['4','6','8']},
+  {q:'Which is a mammal?', correct:'Dog 🐕', wrongs:['Frog 🐸','Fish 🐟','Snake 🐍']},
+  {q:'Water boils at?', correct:'100°C', wrongs:['50°C','80°C','120°C']},
+  {q:'Largest planet?', correct:'Jupiter', wrongs:['Saturn','Earth','Mars']},
+  {q:'Opposite of HOT?', correct:'Cold', wrongs:['Warm','Cool','Icy']},
+  {q:'How many sides in a hexagon?', correct:'6', wrongs:['5','7','8']},
+  {q:'12 × 12 = ?', correct:'144', wrongs:['124','132','148']},
+  {q:'Capital of Singapore?', correct:'Singapore', wrongs:['Kuala Lumpur','Jakarta','Bangkok']},
+  {q:'Plants make food using?', correct:'Sunlight', wrongs:['Water','Soil','Air']},
+  {q:'25% of 80 = ?', correct:'20', wrongs:['15','25','30']},
+  {q:'Synonym of HAPPY?', correct:'Joyful', wrongs:['Sad','Angry','Tired']},
+  {q:'How many legs do insects have?', correct:'6', wrongs:['4','8','10']},
+  {q:'Primary colour?', correct:'Red', wrongs:['Orange','Purple','Green']},
+];
+
+const COLORS = ['🔴','🟠','🟡','🟢','🔵','🟣','🩷','🤍'];
+let score = 0, lives = 3, timeLeft = 30, timerInterval, currentQ = null, balloonTimers = [], gameActive = false;
+
+function startGame() {
+  score = 0; lives = 3; timeLeft = 30; gameActive = true;
+  document.getElementById('score').textContent = 0;
+  document.getElementById('lives').textContent = '❤️❤️❤️';
+  document.getElementById('timer').textContent = 30;
+  document.getElementById('end-screen').classList.add('hidden');
+  document.getElementById('balloon-area').innerHTML = '';
+  balloonTimers.forEach(t => clearTimeout(t));
+  balloonTimers = [];
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    if (timeLeft <= 0) endGame(false);
+  }, 1000);
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (!gameActive) return;
+  currentQ = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
+  document.getElementById('question-area').textContent = '❓ ' + currentQ.q;
+  document.getElementById('balloon-area').innerHTML = '';
+  balloonTimers.forEach(t => clearTimeout(t));
+  balloonTimers = [];
+
+  const options = [currentQ.correct, ...currentQ.wrongs].sort(() => Math.random() - 0.5);
+  options.forEach((opt, i) => {
+    const delay = 300 + i * 600;
+    const t = setTimeout(() => spawnBalloon(opt, opt === currentQ.correct), delay);
+    balloonTimers.push(t);
+  });
+}
+
+function spawnBalloon(text, isCorrect) {
+  if (!gameActive) return;
+  const area = document.getElementById('balloon-area');
+  const b = document.createElement('div');
+  b.className = 'balloon';
+  b.textContent = COLORS[Math.floor(Math.random() * COLORS.length)];
+  const left = 5 + Math.random() * 75;
+  const duration = 5 + Math.random() * 3;
+  b.style.left = left + '%';
+  b.style.animationDuration = duration + 's';
+  b.style.fontSize = '44px';
+  b.style.position = 'absolute';
+
+  const label = document.createElement('div');
+  label.style.cssText = 'position:absolute;bottom:50px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;background:rgba(255,255,255,0.9);border-radius:8px;padding:2px 6px;white-space:nowrap;pointer-events:none';
+  label.textContent = text;
+  b.appendChild(label);
+
+  b.onclick = () => popBalloon(b, isCorrect);
+  area.appendChild(b);
+
+  const removeTimer = setTimeout(() => { if (b.parentNode) b.remove(); }, duration * 1000);
+  balloonTimers.push(removeTimer);
+}
+
+function popBalloon(el, isCorrect) {
+  if (!gameActive || !el.parentNode) return;
+  el.style.transform = 'scale(1.5)';
+  el.style.opacity = '0';
+  el.style.transition = 'all 0.2s';
+  setTimeout(() => el.remove(), 200);
+
+  if (isCorrect) {
+    score++;
+    document.getElementById('score').textContent = score;
+    showFeedback('✅ +1', 'var(--success)');
+    setTimeout(nextQuestion, 400);
+  } else {
+    lives--;
+    const hearts = '❤️'.repeat(Math.max(0, lives));
+    document.getElementById('lives').textContent = hearts || '💔';
+    showFeedback('❌ Wrong!', 'var(--danger)');
+    if (lives <= 0) { setTimeout(() => endGame(true), 400); }
+  }
+}
+
+function showFeedback(msg, color) {
+  const area = document.getElementById('balloon-area');
+  const fb = document.createElement('div');
+  fb.textContent = msg;
+  fb.style.cssText = `position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:22px;font-weight:900;color:${color};pointer-events:none;animation:slideUp 0.8s forwards`;
+  area.appendChild(fb);
+  setTimeout(() => fb.remove(), 800);
+}
+
+function endGame(noLives) {
+  gameActive = false;
+  clearInterval(timerInterval);
+  balloonTimers.forEach(t => clearTimeout(t));
+  document.getElementById('balloon-area').innerHTML = '';
+  document.getElementById('end-screen').classList.remove('hidden');
+  document.getElementById('end-title').textContent = noLives ? '💔 Out of lives!' : '⏰ Time\'s up!';
+  document.getElementById('final-score').textContent = `You popped ${score} correct balloons!`;
+}
+
+startGame();
+</script>
+</body>
+</html>
