@@ -2,7 +2,9 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import sqlite3, hashlib, os, random, json, re
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+# Use a stable secret in production so sessions survive restarts/workers.
+# Falls back to a random key for quick local runs.
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 
 DB = os.path.join(os.path.dirname(__file__), "game.db")
 
@@ -1587,6 +1589,10 @@ def play_game(game_slug):
         return redirect(url_for("dashboard"))
     return render_template(f"games/{game_slug}.html", game=game)
 
+# Initialise the database on import so it also runs under gunicorn/WSGI.
+# init_db() is idempotent (CREATE TABLE IF NOT EXISTS + seed-only-if-empty).
+init_db()
+
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True, host="0.0.0.0", port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=True, host="0.0.0.0", port=port)

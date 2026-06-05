@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: brainburst
+    runtime: python
+    plan: free
+    rootDir: quiz_game
+    buildCommand: pip install -r requirements.txt
+    # Single worker keeps SQLite happy (no write-lock contention) and is plenty for the free tier.
+    startCommand: gunicorn app:app --workers 1 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: "3.12.4"
