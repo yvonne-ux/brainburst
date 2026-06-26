@@ -2982,6 +2982,10 @@ def submit_quiz():
     # Check badges
     new_badges = []
     user = conn.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
+    if not user:
+        conn.commit()
+        conn.close()
+        return jsonify({"score": score, "total": total, "tokens_earned": tokens_earned, "new_badges": []})
 
     def award_badge(name):
         b = conn.execute("SELECT id FROM badges WHERE name=?", (name,)).fetchone()

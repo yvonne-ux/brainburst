@@ -216,13 +216,19 @@ async function nextQuestion() {
 }
 
 async function submitQuiz() {
-  const res = await fetch('/api/submit_quiz', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subject: currentSubject, level: currentLevel, section: currentSection, answers, streak })
-  });
-  const data = await res.json();
-  showResults(data);
-  await loadMe();
+  try {
+    const res = await fetch('/api/submit_quiz', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject: currentSubject, level: currentLevel, section: currentSection, answers, streak })
+    });
+    if (res.status === 401) { window.location.href = '/'; return; }
+    const data = await res.json();
+    showResults(data);
+    await loadMe();
+  } catch (e) {
+    showToast('Could not save results — please try again.');
+    showSection('home');
+  }
 }
 
 function showResults(data) {
