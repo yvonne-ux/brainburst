@@ -250,11 +250,19 @@ body {
 .subject-card.english::before { background: var(--english); }
 .subject-card.chinese::before { background: var(--chinese); }
 .subject-card.art::before { background: var(--art); }
+.subject-card.hchinese::before { background: #C62828; }
+.subject-card.socstudies::before { background: #1565C0; }
+.subject-card.health::before { background: #2E7D32; }
+.subject-card.music::before { background: #6A1B9A; }
 .subject-card.math { border-color: #FFDBC8; }
 .subject-card.science { border-color: #B2DFDB; }
 .subject-card.english { border-color: #D1C4E9; }
 .subject-card.chinese { border-color: #F8BBD0; }
 .subject-card.art { border-color: #FFE0B2; }
+.subject-card.hchinese { border-color: #FFCDD2; }
+.subject-card.socstudies { border-color: #BBDEFB; }
+.subject-card.health { border-color: #C8E6C9; }
+.subject-card.music { border-color: #E1BEE7; }
 
 .subj-icon { font-size: 38px; margin-bottom: 8px; display: block; }
 .subj-name { font-weight: 900; font-size: 14px; color: var(--text); }
@@ -572,3 +580,7 @@ body {
 @media (max-width: 400px) {
   .section-picker { grid-template-columns: 1fr; }
 }
+
+.subject-card.biology::before { background: #00897B; }
+.subject-card.history::before { background: #5D4037; }
+.subject-card.gk::before { background: #0277BD; }

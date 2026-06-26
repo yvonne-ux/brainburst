@@ -23,12 +23,31 @@ function showSection(name) {
   if (navMap[name]) document.getElementById(navMap[name]).classList.add('active');
 }
 
+function updateLevelButtons() {
+  const p3plus = ['Science', 'SocialStudies', 'Biology'];
+  const p4plus = ['History'];
+  document.querySelectorAll('.level-btn').forEach((btn, i) => {
+    const level = i + 1;
+    if (p4plus.includes(currentSubject) && level < 4) {
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+    } else if (p3plus.includes(currentSubject) && level < 3) {
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+    } else {
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    }
+  });
+}
+
 function selectSubject(subject) {
   currentSubject = subject;
   document.getElementById('section-picker').classList.add('hidden');
   document.getElementById('level-picker').classList.remove('hidden');
   document.querySelectorAll('.subject-card').forEach(c => c.style.opacity = '0.5');
   event.currentTarget.style.opacity = '1';
+  updateLevelButtons();
 }
 
 function cancelSubject() {
