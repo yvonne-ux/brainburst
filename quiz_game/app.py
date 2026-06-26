@@ -4,7 +4,7 @@ import sqlite3, hashlib, os, random, json, re
 app = Flask(__name__)
 # Use a stable secret in production so sessions survive restarts/workers.
 # Falls back to a random key for quick local runs.
-app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
+app.secret_key = os.environ.get("SECRET_KEY", "brainburst-default-key-change-in-prod")
 
 DB = os.path.join(os.path.dirname(__file__), "game.db")
 
